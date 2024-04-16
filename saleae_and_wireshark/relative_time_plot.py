@@ -3,6 +3,9 @@ from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import pandas as pd
 from plotly_resampler import FigureResampler
+import process_csv_and_wireshark as pcw
+
+print("start")
 # Read the CSV file into a DataFrame
 df = pd.read_csv('GPIO_relative_time.csv')
 # Access columns by their names
@@ -11,32 +14,41 @@ RelativeTS = df['RelativeTS']
 LogicData = df['LogicData']
 Width_in_us = df['Width_in_us']
 
+capture = pcw.read_wireshark_capture('test_capture_only_beacons.pcapng')
+first_pkt_dt_object = pcw.get_dt_object(capture[0].frame_info.time)
+print("Extracted wireshark capture")
+# Get relative timestamp, duration(us) and rate(Mb/s) for the a packet
+# print(pcw.get_rate_time(capture[1], first_pkt_dt_object))
+
 # Create traces for the first chart
 data1 = []
 for i, start_time in enumerate(RelativeTS):
     data1.append(go.Bar(
         x=[start_time + Width_in_us[i]/2],  # Set the relative start time in us for each bar
-        y=[LogicData[i]*20 + 0.5],
+        y=[LogicData[i]*20 + 0.2],
         width=Width_in_us[i],  # Convert width to milliseconds
         hoverinfo='y+text',  # Display y value and text on hover
         text=f'Value: {Width_in_us[i]} {i}',
         marker=dict(color='steelblue', opacity=0.8),  # Bar color
         showlegend=False  # Remove legend for this trace
     ))
-
+print("Created traces for the first chart")
 # Create traces for the second chart
 data2 = []
-for i, start_time in enumerate(RelativeTS):
+for i , packet in enumerate(capture):
+    print(f"Processing packet {i}")
+    rel_ts_duration_rate = pcw.get_rate_time(packet, first_pkt_dt_object)
     data2.append(go.Bar(
-        x=[start_time + Width_in_us[i]/2],  # Set the relative start time in us for each bar
-        y=[LogicData[i]*20 + 0.5],
-        width=Width_in_us[i],  # Convert width to milliseconds
+        x=[ rel_ts_duration_rate[0] + rel_ts_duration_rate[1]/2],  # Set the relative start time in us for each bar
+        y=[20],
+        # y=[rel_ts_duration_rate[2]],
+        width=rel_ts_duration_rate[1],  # Convert width to milliseconds
         hoverinfo='y+text',  # Display y value and text on hover
-        text=f'Value: {Width_in_us[i]} {i}',
+        text=f'Value: {rel_ts_duration_rate[1]} {i}',
         marker=dict(color='steelblue', opacity=0.8),  # Bar color
         showlegend=False  # Remove legend for this trace
     ))
-
+print("Created traces for the second chart")
 # Create subplot with shared x-axis
 # fig = FigureResampler(make_subplots(rows=2, cols=1, shared_xaxes=True, subplot_titles=("Data 1", "Data 2")))
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True, subplot_titles=("Data 1", "Data 2"))
@@ -48,7 +60,7 @@ for trace in data1:
 
 for trace in data2:
     fig.add_trace(trace, row=2, col=1)
-
+print("Added traces to the subplot")
 # Update layout
 fig.update_layout(
     title='Variable Width Bar Charts with Hover Data on Timeline',
@@ -92,7 +104,7 @@ fig.update_layout(
         ]
     ),
 )
-
+print("Updated layout")
 # Show plot
 # fig.show_dash(mode='inline')
 fig.show()
