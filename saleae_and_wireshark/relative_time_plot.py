@@ -45,7 +45,7 @@ for i , packet in enumerate(capture):
         width=rel_ts_duration_rate[1],  # Convert width to milliseconds
         hoverinfo='y+text',  # Display y value and text on hover
         text=f'Value: {rel_ts_duration_rate[1]} {i}',
-        marker=dict(color='steelblue', opacity=0.8),  # Bar color
+        marker=dict(color='salmon', opacity=0.8),  # Bar color
         showlegend=False  # Remove legend for this trace
     ))
 print("Created traces for the second chart")
