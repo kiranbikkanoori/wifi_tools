@@ -86,8 +86,8 @@ def get_packet(capture, packet_number):
 
 def get_dt_object(time):
     time_split = time.split(' ')
-    time_string = f'{time_split[3]}-{month_dict[time_split[0]]}-{time_split[2][:-1]} {time_split[4][:-3]}'
-    # time_string = f'{time_split[2]}-{month_dict[time_split[0]]}-{time_split[1][:-1]} {time_split[3][:-3]}'
+    # time_string = f'{time_split[3]}-{month_dict[time_split[0]]}-{time_split[2][:-1]} {time_split[4][:-3]}'
+    time_string = f'{time_split[2]}-{month_dict[time_split[0]]}-{time_split[1][:-1]} {time_split[3][:-3]}'
     time_dt_object = datetime.strptime(time_string, '%Y-%m-%d %H:%M:%S.%f')
     return time_dt_object
 
@@ -95,6 +95,8 @@ def get_rate_time(packet, starting_timestamp_dt_object):
     time_dt_object = get_dt_object(packet.frame_info.time)
     relative_time = time_dt_object - starting_timestamp_dt_object
     relative_time = relative_time.total_seconds() * 1000000
+    # print(packet.layers[1])
+    # print(packet.layers[2])
     duration = packet.layers[1].duration
     rate = packet.layers[1].data_rate
     return [int(relative_time), int(duration), float(rate)]

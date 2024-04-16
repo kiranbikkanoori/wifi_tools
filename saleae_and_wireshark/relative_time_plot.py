@@ -6,16 +6,18 @@ from plotly_resampler import FigureResampler
 import process_csv_and_wireshark as pcw
 
 print("start")
+pcw.process_saleae_raw_data("digital.csv")
 # Read the CSV file into a DataFrame
-df = pd.read_csv('GPIO_relative_time.csv')
+df = pd.read_csv('processed_data.csv')
 # Access columns by their names
 Timestamp = df['Timestamp']
 RelativeTS = df['RelativeTS']
 LogicData = df['LogicData']
-Width_in_us = df['Width_in_us']
+Width_in_us = df['Width(us)']
 
-capture = pcw.read_wireshark_capture('test_capture_only_beacons.pcapng')
+capture = pcw.read_wireshark_capture('test_capture_final.pcapng')
 first_pkt_dt_object = pcw.get_dt_object(capture[0].frame_info.time)
+print(first_pkt_dt_object)
 print("Extracted wireshark capture")
 # Get relative timestamp, duration(us) and rate(Mb/s) for the a packet
 # print(pcw.get_rate_time(capture[1], first_pkt_dt_object))
@@ -24,11 +26,11 @@ print("Extracted wireshark capture")
 data1 = []
 for i, start_time in enumerate(RelativeTS):
     data1.append(go.Bar(
-        x=[start_time + Width_in_us[i]/2],  # Set the relative start time in us for each bar
-        y=[LogicData[i]*20 + 0.2],
-        width=Width_in_us[i],  # Convert width to milliseconds
+        x=[start_time + Width_in_us[i]/2 + 550315],  # Set the relative start time in us for each bar
+        y=[LogicData[i] + 0.01],
+        width=Width_in_us[i]+2000,  # Convert width to milliseconds
         hoverinfo='y+text',  # Display y value and text on hover
-        text=f'Value: {Width_in_us[i]} {i}',
+        text=f'Time: {Width_in_us[i]}',
         marker=dict(color='steelblue', opacity=0.8),  # Bar color
         showlegend=False  # Remove legend for this trace
     ))
@@ -51,7 +53,7 @@ for i , packet in enumerate(capture):
 print("Created traces for the second chart")
 # Create subplot with shared x-axis
 # fig = FigureResampler(make_subplots(rows=2, cols=1, shared_xaxes=True, subplot_titles=("Data 1", "Data 2")))
-fig = make_subplots(rows=2, cols=1, shared_xaxes=True, subplot_titles=("Data 1", "Data 2"))
+fig = make_subplots(rows=2, cols=1, shared_xaxes=True, subplot_titles=("Saleae plot", "Wireshark plot"))
 
 
 # Add traces to the subplot
@@ -63,7 +65,7 @@ for trace in data2:
 print("Added traces to the subplot")
 # Update layout
 fig.update_layout(
-    title='Variable Width Bar Charts with Hover Data on Timeline',
+    title='Saleae and Wireshark data comparison',
     xaxis=dict(
         title='Time',
         # type='data',
